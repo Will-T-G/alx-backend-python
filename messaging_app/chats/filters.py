@@ -1,14 +1,13 @@
 import django_filters
 from .models import Message
 
-
 class MessageFilter(django_filters.FilterSet):
-    # Filter messages sent after a time
+    # Filter messages sent after this datetime
     created_after = django_filters.DateTimeFilter(
         field_name="created_at", lookup_expr="gte"
     )
 
-    # Filter messages sent before a time
+    # Filter messages sent before this datetime
     created_before = django_filters.DateTimeFilter(
         field_name="created_at", lookup_expr="lte"
     )
