@@ -27,14 +27,15 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
-    # Use DjangoFilterBackend for filtering
+    # ALX-required filtering
     filter_backends = [DjangoFilterBackend]
     filterset_class = MessageFilter
 
-    # Custom pagination
+    # Pagination
     pagination_class = MessagePagination
 
     def get_queryset(self):
+        # Users only see messages from conversations they participate in
         return Message.objects.filter(
             conversation__participants=self.request.user
         )
