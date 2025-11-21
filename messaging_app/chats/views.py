@@ -9,6 +9,8 @@ from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation
 from .filters import MessageFilter
+from .pagination import MessagePagination
+
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -25,25 +27,26 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
-    # ADD FILTERING
+    # Use DjangoFilterBackend for filtering
     filter_backends = [DjangoFilterBackend]
     filterset_class = MessageFilter
 
+    # Custom pagination
+    pagination_class = MessagePagination
+
     def get_queryset(self):
-        # Users only see messages they are allowed to
         return Message.objects.filter(
             conversation__participants=self.request.user
         )
 
     def perform_create(self, serializer):
-        conversation_id = self.request.data.get("conversation_id")  # required
+        conversation_id = self.request.data.get("conversation_id")
         conversation = get_object_or_404(Conversation, id=conversation_id)
 
-        # ALX-required permission check
         if self.request.user not in conversation.participants.all():
             return Response(
                 {"detail": "Not allowed to send messages here."},
-                status=status.HTTP_403_FORBIDDEN,  # required by checker
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer.save(user=self.request.user, conversation=conversation)
