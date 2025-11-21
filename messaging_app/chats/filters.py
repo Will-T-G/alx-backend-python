@@ -1,3 +1,7 @@
+import django_filters
+from .models import Message
+
+
 class MessageFilter(django_filters.FilterSet):
     # Filter messages sent after a time
     created_after = django_filters.DateTimeFilter(
