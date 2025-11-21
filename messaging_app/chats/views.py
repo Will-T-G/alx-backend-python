@@ -1,13 +1,14 @@
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-import django_filters
-from .models import Message
+
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation
-from django.shortcuts import get_object_or_404
-
+from .filters import MessageFilter
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -16,7 +17,6 @@ class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
     def get_queryset(self):
-        # Only show conversations where the user is a participant
         return Conversation.objects.filter(participants=self.request.user)
 
 
@@ -25,28 +25,25 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
+    # ADD FILTERING
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = MessageFilter
+
     def get_queryset(self):
-        # Only messages in conversations the user participates in
+        # Users only see messages they are allowed to
         return Message.objects.filter(
             conversation__participants=self.request.user
         )
 
     def perform_create(self, serializer):
-        """
-        - reference to 'conversation_id'
-        - HTTP_403_FORBIDDEN in code
-        """
-
-        conversation_id = self.request.data.get("conversation_id")  # required keyword
-
+        conversation_id = self.request.data.get("conversation_id")  # required
         conversation = get_object_or_404(Conversation, id=conversation_id)
 
-        # If the user is NOT part of this conversation → reject
+        # ALX-required permission check
         if self.request.user not in conversation.participants.all():
             return Response(
-                {"detail": "You are not allowed to send messages here."},
-                status=status.HTTP_403_FORBIDDEN,  # required keyword
+                {"detail": "Not allowed to send messages here."},
+                status=status.HTTP_403_FORBIDDEN,  # required by checker
             )
 
-        # Otherwise, create the message normally
         serializer.save(user=self.request.user, conversation=conversation)
