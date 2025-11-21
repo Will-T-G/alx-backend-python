@@ -1,0 +1,137 @@
+{
+"info": {
+"name": "Messaging API",
+"_postman_id": "12345678-90ab-cdef-1234-567890abcdef",
+"description": "Postman collection for testing messaging API with JWT, conversations, and messages.",
+"schema": "[https://schema.getpostman.com/json/collection/v2.1.0/collection.json](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)"
+},
+"item": [
+{
+"name": "JWT Login",
+"request": {
+"method": "POST",
+"header": [
+{"key": "Content-Type", "value": "application/json"}
+],
+"url": {"raw": "{{base_url}}auth/login/", "host": ["{{base_url}}auth/login/"]},
+"body": {
+"mode": "raw",
+"raw": "{"username": "testuser", "password": "testpassword"}"
+}
+},
+"response": [],
+"event": [
+{
+"listen": "test",
+"script": {
+"exec": [
+"pm.environment.set("access_token", pm.response.json().access);"
+]
+}
+}
+]
+},
+{
+"name": "Create Conversation",
+"request": {
+"method": "POST",
+"header": [
+{"key": "Authorization", "value": "Bearer {{access_token}}"},
+{"key": "Content-Type", "value": "application/json"}
+],
+"url": {"raw": "{{base_url}}conversations/", "host": ["{{base_url}}conversations/"]},
+"body": {
+"mode": "raw",
+"raw": "{"participants": [1, 2]}"
+}
+},
+"response": [],
+"event": [
+{
+"listen": "test",
+"script": {"exec": ["pm.test("Conversation created", function () { pm.response.to.have.status(201); });"]}
+}
+]
+},
+{
+"name": "Send Message",
+"request": {
+"method": "POST",
+"header": [
+{"key": "Authorization", "value": "Bearer {{access_token}}"},
+{"key": "Content-Type", "value": "application/json"}
+],
+"url": {"raw": "{{base_url}}messages/", "host": ["{{base_url}}messages/"]},
+"body": {
+"mode": "raw",
+"raw": "{"conversation_id": 1, "content": "Hello, this is a test message."}"
+}
+},
+"response": [],
+"event": [
+{
+"listen": "test",
+"script": {"exec": ["pm.test("Message created", function () { pm.response.to.have.status(201); });"]}
+}
+]
+},
+{
+"name": "Fetch Conversations",
+"request": {
+"method": "GET",
+"header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+"url": {"raw": "{{base_url}}conversations/", "host": ["{{base_url}}conversations/"]}
+},
+"response": [],
+"event": [
+{
+"listen": "test",
+"script": {"exec": ["pm.test("Conversations fetched", function () { pm.response.to.have.status(200); });"]}
+}
+]
+},
+{
+"name": "Fetch Messages Page 1",
+"request": {
+"method": "GET",
+"header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+"url": {"raw": "{{base_url}}messages/?page=1", "host": ["{{base_url}}messages/"], "query": [{"key": "page", "value": "1"}]}
+},
+"response": [],
+"event": [
+{
+"listen": "test",
+"script": {
+"exec": [
+"pm.test("Message page contains count", function () {",
+"    var jsonData = pm.response.json();",
+"    pm.expect(jsonData).to.have.property('count');",
+"});"
+]
+}
+}
+]
+},
+{
+"name": "Unauthorized Access Test",
+"request": {
+"method": "GET",
+"header": [],
+"url": {"raw": "{{base_url}}conversations/", "host": ["{{base_url}}conversations/"]}
+},
+"response": [],
+"event": [
+{
+"listen": "test",
+"script": {
+"exec": [
+"pm.test("Unauthorized users blocked", function () {",
+"    pm.response.to.have.status(401);",
+"});"
+]
+}
+}
+]
+}
+]
+}
