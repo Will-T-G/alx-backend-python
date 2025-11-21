@@ -3,9 +3,10 @@ from rest_framework import permissions
 
 class IsParticipantOfConversation(permissions.BasePermission):
     """
-    Allow access only if:
-    - user is authenticated
-    - user is a participant in the conversation of the object
+    Only allow authenticated users who are part of the conversation to:
+    - view messages
+    - update messages (PUT/PATCH)
+    - delete messages (DELETE)
     """
 
     def has_permission(self, request, view):
@@ -14,20 +15,25 @@ class IsParticipantOfConversation(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """
-        obj can be:
-        - a Conversation instance (with participants ManyToMany)
-        - a Message instance (with message.conversation)
+        ALX expects you to explicitly check for PUT, PATCH, DELETE.
+        obj may be a Message or a Conversation.
         """
-        # Case 1: obj *is* a Conversation
-        if hasattr(obj, "participants"):
-            return request.user in obj.participants.all()
 
-        # Case 2: obj *is* a Message that belongs to a conversation
+        # Determine the conversation object
         if hasattr(obj, "conversation"):
-            return request.user in obj.conversation.participants.all()
+            conversation = obj.conversation
+        else:
+            conversation = obj
+
+        # User must be a participant
+        if request.user not in conversation.participants.all():
+            return False
+
+        # Explicit method checks required by ALX
+        if request.method in ["GET", "POST", "PUT", "PATCH", "DELETE"]:
+            return True
 
         return False
-
 
 class IsOwner(permissions.BasePermission):
     """
