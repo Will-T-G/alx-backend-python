@@ -34,3 +34,15 @@ def log_message_edit(sender, instance, **kwargs):
 
         # Flag message as edited
         instance.edited = True
+
+
+@receiver(post_delete, sender=User)
+def cleanup_user_related_data(sender, instance, **kwargs):
+    """
+    Clean up all user-related data when the user account is deleted.
+    Triggered automatically after a User is deleted.
+    """
+    Message.objects.filter(sender=instance).delete()
+    Message.objects.filter(receiver=instance).delete()
+    Notification.objects.filter(user=instance).delete()
+    MessageHistory.objects.filter(user=instance).delete()
