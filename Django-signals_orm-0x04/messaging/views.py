@@ -20,3 +20,9 @@ def delete_user(request):
         {"message": f"User '{username}' and related data deleted successfully."},
         status=status.HTTP_200_OK
     )
+
+@login_required
+def delete_user(request):
+    user = request.user
+    user.delete()  # This triggers post_delete signal
+    return JsonResponse({"message": "User account deleted successfully"})
